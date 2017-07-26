@@ -44,12 +44,14 @@ class App extends Component {
       // 01 -> 1
       // 10 -> 1
       // 10 -> 0
-      keyToggles: [1, 1, 0, 0]
+      keyToggles: [0, 0, 0, 0]
     }
   }
 
   _handleKeyDown (event) {
     switch( event.keyCode ) {
+        
+        // toggle on next
         case KEYS.A:
             this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 0, 1) }))
             break;
@@ -61,6 +63,14 @@ class App extends Component {
             break;
         case KEYS.F:
             this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 3, 1) }))
+            break;
+
+        // apply
+        case KEYS.L:
+            this.setState(prev => ({left: applyNext(prev.left.slice(), prev.next.slice(), prev.keyToggles.slice()) }))
+            break;
+        case KEYS.R:
+            this.setState(prev => ({right: applyNext(prev.right.slice(), prev.next.slice(), prev.keyToggles.slice()) }))
             break;
         default: 
           console.log(event.keyCode)
@@ -124,6 +134,24 @@ class App extends Component {
     let result = arr.slice();
     result[index] = value;
     return result;
+  }
+
+  function applyNext(blocks, next, toggles) {
+    console.log(JSON.stringify(blocks) + "-" + toggles)
+    return blocks.map( (data,i) => {
+      let firstEmpty = data.indexOf(0)
+      let active = (next[i] ^ toggles[i]) === 1
+
+      if (!active) {
+        console.log("not active")
+      } else if (firstEmpty < 0) {
+        console.log("full!")
+      } else {
+        console.log("block got filled")
+        data[firstEmpty] = 1
+      }
+      return data
+    })
   }
 
   export default App;
