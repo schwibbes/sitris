@@ -1,0 +1,14 @@
+.block {
+  width: 60px;
+  height: 60px;
+  display: inline-block;
+  border: 1px solid black;
+}
+
+.block-fill {
+    background-color: red;
+}
+
+.block-nofill {
+    background-color: grey;
+}
