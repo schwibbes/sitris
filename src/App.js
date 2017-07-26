@@ -26,14 +26,14 @@ class App extends Component {
 
   render() {
 
-    let leftBlocks = this.state.left.map(row => {
-      let items = row.map(item => { return <Block filled={item}/> })
-      return <div className='block-row'>{items}</div>
+    let leftBlocks = this.state.left.map( (row, i) => {
+      let items = row.map( (item,j) => { return <Block key={'b_' + i + "." + j} filled={item}/> })
+      return <div key={'r_' + i} className='block-row'>{items}</div>
     })
 
-    let rightBlocks = this.state.right.map(row => {
-      let items = row.reverse().map(item => { return <Block filled={item}/> })
-      return <div className='block-row'>{items}</div>
+    let rightBlocks = this.state.right.map( (row,i) => {
+      let items = row.map( (item,j) => { return <Block key={'b_' + i + "." + j} filled={item}/> })
+      return <div key={'r_' + i} className='block-row'>{items}</div>
     })
 
     return ( 
