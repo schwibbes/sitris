@@ -10,6 +10,13 @@
   top: 50px;
 }
 
+.next-blocks {
+  position: absolute;
+  left: calc(50% - 30px);
+  width: 60px;
+  top: 50px;
+}
+
 .block-row {
 
 }
