@@ -29,61 +29,55 @@ const LOOKUP = {
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      left: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
-      right: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
-      next: randomArray(ROW_COUNT, [0,1]),
-      keyToggles: createArray(ROW_COUNT, 0)
-    }
+    this.state = reset()
   }
 
   _handleKeyDown (event) {
-    switch( event.keyCode ) {
-        
-        // toggle on next
-        case KEYS.A:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 0, 1) }))
-            break;
-        case KEYS.S:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 1, 1) }))
-            break;
-        case KEYS.D:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 2, 1) }))
-            break;
-        case KEYS.F:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 3, 1) }))
-            break;
+    switch( event.keyCode ) {        
+    // toggle on next
+    case KEYS.A:
+        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 0, 1) }))
+        break;
+    case KEYS.S:
+        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 1, 1) }))
+        break;
+    case KEYS.D:
+        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 2, 1) }))
+        break;
+    case KEYS.F:
+        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 3, 1) }))
+        break;
 
-        // apply
-        case KEYS.L:
-            this.setState(prev => ({left: applyNext(prev.left.slice(), prev.next.slice(), prev.keyToggles.slice()) }))
-            break;
-        case KEYS.R:
-            this.setState(prev => ({right: applyNext(prev.right.slice(), prev.next.slice(), prev.keyToggles.slice()) }))
-            break;
-        default: 
-          console.log(event.keyCode)
-            break;
+    // apply block
+    case KEYS.L:
+        this.setState(dropBlock('left'))
+        break;
+    case KEYS.R:
+        this.setState(dropBlock('right'))
+        break;
+    default: 
+      console.info(event.keyCode)
+      break;
     }
   }
 
   _handleKeyUp (event) {
     switch( event.keyCode ) {
-        case KEYS.A:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 0, 0) }))
-            break;
-        case KEYS.S:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 1, 0) }))
-            break;
-        case KEYS.D:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 2, 0) }))
-            break;
-        case KEYS.F:
-            this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 3, 0) }))
-            break;
-        default: 
-          console.log(event.keyCode)
-            break;
+    case KEYS.A:
+      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 0, 0) }))
+      break;
+    case KEYS.S:
+      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 1, 0) }))
+      break;
+    case KEYS.D:
+      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 2, 0) }))
+      break;
+    case KEYS.F:
+      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 3, 0) }))
+      break;
+    default: 
+      console.info(event.keyCode)
+      break;
     }
   }
 
@@ -125,24 +119,6 @@ class App extends Component {
     return result;
   }
 
-  function applyNext(blocks, next, toggles) {
-    console.log(JSON.stringify(blocks) + "-" + toggles)
-    return blocks.map( (data,i) => {
-      let firstEmpty = data.indexOf(0)
-      let active = (next[i] ^ toggles[i]) === 1
-
-      if (!active) {
-        console.log("not active")
-      } else if (firstEmpty < 0) {
-        console.log("full!")
-      } else {
-        console.log("block got filled")
-        data[firstEmpty] = 1
-      }
-      return data
-    })
-  }
-
   function createArray(size, fill) {
     
     let result = []
@@ -167,5 +143,71 @@ class App extends Component {
   function randomFromArray(array) {
     return array[Math.floor(Math.random()*array.length)];
   }
+
+  function dropBlock(side) {
+    return function (oldState) {      
+      return updateGameWithNext(side, pickSide(side, oldState), oldState.next.slice(), oldState.keyToggles.slice())
+    }
+  }
+
+function pickSide(side, oldState) {
+  if (side === 'left') {
+    return oldState.left.slice()
+  } else if (side === 'right') {
+    return oldState.right.slice()
+  } else {
+    throw new Error("side must be left/right, bus was: " + side)
+  }
+}
+
+function updateGameWithNext(side, blockContainer, next, toggle) {
+  let newBlocks = blockContainer.map(updateRowWithNext(blockEffect(next, toggle)));
+  
+  let result = {};  
+  result[side] = newBlocks;
+  result.next = randomArray(ROW_COUNT, [0,1]);
+
+  if (newBlocks.some( row => row.indexOf(0) < 0)) {
+    console.warn("row full -> RIP")
+    result = reset()
+  }
+  return result;
+}
+
+
+function updateRowWithNext(effectiveNext) {
+  return function (blocksInRow, rowIndex) {
+
+    console.warn(JSON.stringify(blocksInRow) + "-" + JSON.stringify(effectiveNext))
+    console.warn(rowIndex)
+    let firstEmpty = blocksInRow.indexOf(0)
+
+    if (effectiveNext[rowIndex] === 0) {
+      console.info("not active")
+    } else if (firstEmpty < 0) {
+      console.info("full!")
+    } else {
+      console.info("block got filled")
+      blocksInRow[firstEmpty] = 1
+    }
+    return blocksInRow    
+  }
+}
+
+function blockEffect(next, toggle) {
+  if (next.length !== toggle.length) {
+    throw new Error("lengths must be equal, got: " + next + " and " + toggle)
+  }
+  return next.map( (x,i) => x ^ toggle[i] );
+}
+
+function reset() {
+  return {
+    left: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
+    right: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
+    next: randomArray(ROW_COUNT, [0,1]),
+    keyToggles: createArray(ROW_COUNT, 0)
+  }
+}
 
   export default App;
