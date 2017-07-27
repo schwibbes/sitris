@@ -1,30 +1,10 @@
-import React, {
-  Component
-} from 'react';
+import React, { Component } from 'react';
 import './App.css';
+import * as Keys from './Keys.js'
 import Block from './Block.js';
 
 const COL_COUNT = 8
 const ROW_COUNT = 4 // maps to keys asdf
-
-const KEYS = {
- ESC: 27,
- // toggles
- A: 65,
- S: 83,
- D: 68,
- F: 70,
- // dirs
- L: 74,
- R: 75
-};
-
-const LOOKUP = {
-  0: 'a',
-  1: 's',
-  2: 'd',
-  3: 'f'
-}
 
 class App extends Component {
   constructor() {
@@ -33,51 +13,18 @@ class App extends Component {
   }
 
   _handleKeyDown (event) {
-    switch( event.keyCode ) {        
-    // toggle on next
-    case KEYS.A:
-        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 0, 1) }))
-        break;
-    case KEYS.S:
-        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 1, 1) }))
-        break;
-    case KEYS.D:
-        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 2, 1) }))
-        break;
-    case KEYS.F:
-        this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 3, 1) }))
-        break;
-
-    // apply block
-    case KEYS.L:
-        this.setState(dropBlock('left'))
-        break;
-    case KEYS.R:
-        this.setState(dropBlock('right'))
-        break;
-    default: 
-      console.info(event.keyCode)
-      break;
+    let code = event.keyCode;
+    if (Keys.isRowSelect(code)) {
+      this.setState(toggleOn(Keys.rowIndexFromKeyCode(code)))
+    } else if (Keys.isSideSelect(code)) {
+      this.setState(dropBlock(Keys.sideFromKeyCode(code)))
     }
   }
 
   _handleKeyUp (event) {
-    switch( event.keyCode ) {
-    case KEYS.A:
-      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 0, 0) }))
-      break;
-    case KEYS.S:
-      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 1, 0) }))
-      break;
-    case KEYS.D:
-      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 2, 0) }))
-      break;
-    case KEYS.F:
-      this.setState(prev => ({keyToggles: setToggle(prev.keyToggles, 3, 0) }))
-      break;
-    default: 
-      console.info(event.keyCode)
-      break;
+    let code = event.keyCode;
+    if (Keys.isRowSelect(code)) {
+      this.setState(toggleOff(Keys.rowIndexFromKeyCode(code)))
     }
   }
 
@@ -100,7 +47,7 @@ class App extends Component {
 
     let nextBlocks = this.state.next.map( (b,i) => {
       let active = b ^ this.state.keyToggles[i]
-      return <Block key={'n_'+i} filled = {active} txt={LOOKUP[i]}/>
+      return <Block key={'n_'+i} filled = {active} txt={Keys.keyFromRowIndex(i)}/>
     });
 
     return ( 
@@ -111,12 +58,6 @@ class App extends Component {
       </div>
       );
     }
-  }
-
-  function setToggle(arr, index, value) {
-    let result = arr.slice();
-    result[index] = value;
-    return result;
   }
 
   function createArray(size, fill) {
@@ -168,7 +109,7 @@ function updateGameWithNext(side, blockContainer, next, toggle) {
   result.next = randomArray(ROW_COUNT, [0,1]);
 
   if (newBlocks.some( row => row.indexOf(0) < 0)) {
-    console.warn("row full -> RIP")
+    console.info("row full -> RIP")
     result = reset()
   }
   return result;
@@ -178,8 +119,8 @@ function updateGameWithNext(side, blockContainer, next, toggle) {
 function updateRowWithNext(effectiveNext) {
   return function (blocksInRow, rowIndex) {
 
-    console.warn(JSON.stringify(blocksInRow) + "-" + JSON.stringify(effectiveNext))
-    console.warn(rowIndex)
+    console.info(JSON.stringify(blocksInRow) + "-" + JSON.stringify(effectiveNext))
+    console.info(rowIndex)
     let firstEmpty = blocksInRow.indexOf(0)
 
     if (effectiveNext[rowIndex] === 0) {
@@ -200,6 +141,25 @@ function blockEffect(next, toggle) {
   }
   return next.map( (x,i) => x ^ toggle[i] );
 }
+
+function toggleOn(rowIndex) {
+  return function (oldState) {
+    return { keyToggles: setToggle(oldState.keyToggles, rowIndex, 1) };
+  };
+}
+
+function toggleOff(rowIndex) {
+  return function (oldState) {
+    return { keyToggles: setToggle(oldState.keyToggles, rowIndex, 0) };
+  };
+}
+
+function setToggle(arr, index, value) {
+  let result = arr.slice();
+  result[index] = value;
+  return result;
+}
+
 
 function reset() {
   return {
