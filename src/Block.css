@@ -1,13 +1,13 @@
 .block {
-  width: 60px;
-  height: 60px;
+  width: 30px;
+  height: 30px;
   display: inline-block;
   border: 1px solid black;
   text-align: center;
 }
 
 .block-txt {
-  line-height: 60px;
+  line-height: 30px;
 }
 
 .block-fill {

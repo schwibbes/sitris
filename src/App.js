@@ -4,6 +4,9 @@ import React, {
 import './App.css';
 import Block from './Block.js';
 
+const COL_COUNT = 8
+const ROW_COUNT = 4 // maps to keys asdf
+
 const KEYS = {
  ESC: 27,
  // toggles
@@ -27,24 +30,10 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      left: [
-        [1, 0, 0, 0],
-        [1, 1, 1, 1],
-        [1, 1, 0, 0],
-        [1, 0, 0, 0]
-      ],
-      right: [
-        [1, 1, 0, 0],
-        [1, 1, 1, 1],
-        [1, 1, 0, 0],
-        [1, 0, 0, 0]
-      ],
-      next: [0, 1, 1, 0],
-      // 00 -> 0
-      // 01 -> 1
-      // 10 -> 1
-      // 10 -> 0
-      keyToggles: [0, 0, 0, 0]
+      left: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
+      right: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
+      next: randomArray(ROW_COUNT, [0,1]),
+      keyToggles: createArray(ROW_COUNT, 0)
     }
   }
 
@@ -152,6 +141,31 @@ class App extends Component {
       }
       return data
     })
+  }
+
+  function createArray(size, fill) {
+    
+    let result = []
+    for (var i = 0; i < size; i++) {
+      if (typeof fill === 'function') {
+        result.push(fill.call())
+      } else {
+        result.push(fill);
+      }
+    }
+    return result;
+  }
+
+  function randomArray(size, elements) {
+    let result = []
+    for (var i = 0; i < size; i++) {
+      result.push(randomFromArray(elements))
+    }
+    return result;    
+  }
+
+  function randomFromArray(array) {
+    return array[Math.floor(Math.random()*array.length)];
   }
 
   export default App;
