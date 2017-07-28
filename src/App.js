@@ -5,6 +5,7 @@ import Block from './Block.js';
 
 const COL_COUNT = 8
 const ROW_COUNT = 4 // maps to keys asdf
+const COLORS = [0,1,2]
 
 class App extends Component {
   constructor() {
@@ -35,20 +36,9 @@ class App extends Component {
 
   render() {
 
-    let leftBlocks = this.state.left.map( (row, i) => {
-      let items = row.map( (item,j) => { return <Block key={'b_' + i + "." + j} filled={item}/> })
-      return <div key={'r_' + i} className='block-row'>{items}</div>
-    });
-
-    let rightBlocks = this.state.right.map( (row,i) => {
-      let items = row.slice().reverse().map( (item,j) => { return <Block key={'b_' + i + "." + j} filled={item}/> })
-      return <div key={'r_' + i} className='block-row'>{items}</div>
-    });
-
-    let nextBlocks = this.state.next.map( (b,i) => {
-      let active = b ^ this.state.keyToggles[i]
-      return <Block key={'n_'+i} filled = {active} txt={Keys.keyFromRowIndex(i)}/>
-    });
+    let leftBlocks = this.state.left.map(drawRow('l'));
+    let rightBlocks = this.state.right.map(drawRow('r'));
+    let nextBlocks = this.state.next.map(drawNext(blockEffect(this.state.next,this.state.keyToggles)));
 
     return ( 
       <div className='block-container'>
@@ -59,6 +49,32 @@ class App extends Component {
       );
     }
   }
+
+function drawRow(side) {
+  return function (row, rowIndex) {
+    let rowId = side + '_' + rowIndex; 
+    return (
+      <div 
+        key={rowId}
+        className='block-row'>{row.map(drawBlock(rowId))}
+      </div>
+    )
+  }
+}
+
+function drawNext(toggle) {
+  return function (color, rowIndex) {
+    let id = 'next_' + rowIndex;
+    return (<Block key={id} color={toggle[rowIndex]} />);
+  }
+}
+
+
+function drawBlock(rowId) {
+  return function (color, colIndex) {
+    return (<Block key={`${rowId}_b.${colIndex}`} color={color}/>) ;
+  }
+}
 
   function createArray(size, fill) {
     
@@ -106,7 +122,7 @@ function updateGameWithNext(side, blockContainer, next, toggle) {
   
   let result = {};  
   result[side] = newBlocks;
-  result.next = randomArray(ROW_COUNT, [0,1]);
+  result.next = randomArray(ROW_COUNT, COLORS);
 
   if (newBlocks.some( row => row.indexOf(0) < 0)) {
     console.info("row full -> RIP")
@@ -118,9 +134,7 @@ function updateGameWithNext(side, blockContainer, next, toggle) {
 
 function updateRowWithNext(effectiveNext) {
   return function (blocksInRow, rowIndex) {
-
     console.info(JSON.stringify(blocksInRow) + "-" + JSON.stringify(effectiveNext))
-    console.info(rowIndex)
     let firstEmpty = blocksInRow.indexOf(0)
 
     if (effectiveNext[rowIndex] === 0) {
@@ -129,7 +143,7 @@ function updateRowWithNext(effectiveNext) {
       console.info("full!")
     } else {
       console.info("block got filled")
-      blocksInRow[firstEmpty] = 1
+      blocksInRow[firstEmpty] = effectiveNext[rowIndex]
     }
     return blocksInRow    
   }
@@ -139,22 +153,22 @@ function blockEffect(next, toggle) {
   if (next.length !== toggle.length) {
     throw new Error("lengths must be equal, got: " + next + " and " + toggle)
   }
-  return next.map( (x,i) => x ^ toggle[i] );
+  return next.map( (color,rowIndex) => Math.abs(1-toggle[rowIndex]) * color );
 }
 
 function toggleOn(rowIndex) {
   return function (oldState) {
-    return { keyToggles: setToggle(oldState.keyToggles, rowIndex, 1) };
+    return { keyToggles: updateValue(oldState.keyToggles, rowIndex, 1) };
   };
 }
 
 function toggleOff(rowIndex) {
   return function (oldState) {
-    return { keyToggles: setToggle(oldState.keyToggles, rowIndex, 0) };
+    return { keyToggles: updateValue(oldState.keyToggles, rowIndex, 0) };
   };
 }
 
-function setToggle(arr, index, value) {
+function updateValue(arr, index, value) {
   let result = arr.slice();
   result[index] = value;
   return result;
@@ -165,7 +179,7 @@ function reset() {
   return {
     left: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
     right: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
-    next: randomArray(ROW_COUNT, [0,1]),
+    next: randomArray(ROW_COUNT, COLORS),
     keyToggles: createArray(ROW_COUNT, 0)
   }
 }

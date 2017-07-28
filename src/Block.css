@@ -1,19 +1,24 @@
 .block {
   width: 30px;
-  height: 30px;
+  height: 60px;
   display: inline-block;
   border: 1px solid black;
   text-align: center;
 }
 
 .block-txt {
-  line-height: 30px;
+  line-height: 60px;
 }
 
-.block-fill {
+.block-0 {
+    background-color: grey;
+}
+
+.block-1 {
     background-color: red;
 }
 
-.block-nofill {
-    background-color: grey;
+.block-2 {
+    background-color: cyan;
 }
+
