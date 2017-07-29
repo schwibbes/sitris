@@ -7,9 +7,9 @@ import Score from './Score.js';
 const COL_COUNT = 8 // width of block container
 const ROW_COUNT = 4 // maps to keys asdf
 const PREVIEW_COUNT = ROW_COUNT * 2 // visible next blocks
-const SLOTS = 4 // number of simultaneous rows to activate
+const SLOTS = 1 // number of simultaneous rows to activate
 const COLORS = [1,2,3] // available colors
-const RUN_TO_CLEAR = 3 // how many adjacent blocks for a clear
+const RUN_TO_CLEAR = 4 // how many adjacent blocks for a clear
 const SCORE = 100 // base score multiplier
 
 class App extends Component {
@@ -156,40 +156,65 @@ function clearBlocks(rowsOfBlocks) {
 
   // collect in same row
   let runsHorizontal = findRunsHorizontal(rowsOfBlocks)
-  console.log(JSON.stringify(runsHorizontal))
   runsHorizontal = runsHorizontal.map(row => row.filter(run => run.color !== 0))
-  console.log(JSON.stringify(runsHorizontal))
   runsHorizontal = runsHorizontal.map(row => row.filter(run => run.elements.length >= RUN_TO_CLEAR))
-  console.log(JSON.stringify(runsHorizontal))
-  console.log("--")
+
   // collect in same column
-  // ...
+  let runsVertical = findRunsVertical(rowsOfBlocks)
+  runsVertical = runsVertical.map(col => col.filter(run => run.color !== 0))
+  runsVertical = runsVertical.map(col => col.filter(run => run.elements.length >= RUN_TO_CLEAR))
+  // console.log(runsVertical)
 
-  return rowsOfBlocks.map(clearBlocksInRow(runsHorizontal))
-}
-
-function clearBlocksInRow(runsH) {
-  return function (blocksInRow, rowIndex) {
-    return blocksInRow.map((block, index) => runsH[rowIndex].some(run => run.elements.includes(index)) ? 0 : block )
-  }
+  return rowsOfBlocks.map( (row,y) => row.map( (block,x) => {
+    
+    if (runsHorizontal[y].some(run => run.elements.includes(x))){
+      return 0;
+    } else if (runsVertical[x].some(run => run.elements.includes(y))) {
+      return 0;
+    } else {
+      return block;
+    }
+  }));
 }
 
 export function findRunsHorizontal(rowsOfBlocks) {
   return rowsOfBlocks.map(row => {
     let result = []
 
-    for (var i = 0; i < row.length; i++) {
-      let block = row[i]
+    for (var x = 0; x < row.length; x++) {
+      let block = row[x]
       let current = last(result)
       if (current && current.color === block) {
-        current.elements.push(i)
+        current.elements.push(x)
       } else {
-        result.push({color: block, elements:[i]});
+        result.push({color: block, elements:[x]});
       }
     }
     return result
   });
 }
+
+export function findRunsVertical(rowsOfBlocks) {
+  
+  let result = createArray(rowsOfBlocks[0].length, () => [])
+
+  for (var y = 0; y < rowsOfBlocks.length; y++) {
+    let row = rowsOfBlocks[y];
+  
+    for (var x = 0; x < row.length; x++) {
+      let block = row[x]
+      let current = last(result[x])
+
+      if (current && current.color === block) {
+        current.elements.push(y);
+      } else {
+        result[x].push({color: block, elements:[y]});
+      }
+    }
+  }
+  return result;
+}
+
 
 function last(arr) {
   if (arr && arr.length > 0) {
