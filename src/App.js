@@ -11,6 +11,7 @@ const SLOTS = 1 // number of simultaneous rows to activate
 const COLORS = [1,2,3] // available colors
 const RUN_TO_CLEAR = 4 // how many adjacent blocks for a clear
 const SCORE = 100 // base score multiplier
+const TIC_MS = 3000 // game speed in ms
 
 class App extends Component {
   constructor() {
@@ -24,6 +25,10 @@ class App extends Component {
       this.setState(toggleOn(Keys.rowIndexFromKeyCode(code)))
     } else if (Keys.isSideSelect(code)) {
       this.setState(dropBlock(Keys.sideFromKeyCode(code)))
+
+      clearTimeout(this.state.timer);
+      this.setState( {timer: setTimeout(this._progress.bind(this), TIC_MS)} );
+
     }
   }
 
@@ -37,6 +42,25 @@ class App extends Component {
   componentWillMount() {
     document.addEventListener('keydown', this._handleKeyDown.bind(this))
     document.addEventListener('keyup', this._handleKeyUp.bind(this))
+  }
+
+  _progress() {
+    this.setState( (oldState, props) => { 
+      let newNext = oldState.next.slice();
+      newNext.shift();
+      newNext.push(randomFromArray(COLORS));
+      console.log(newNext)
+      return ({ 
+        next: newNext,
+        timer: setTimeout(this._progress.bind(this), TIC_MS)
+      });
+    });
+    
+  }
+
+  componentDidMount() { 
+    this.setState( {timer: setTimeout(this._progress.bind(this), TIC_MS)} );
+    // todo unmount
   }
 
   render() {
