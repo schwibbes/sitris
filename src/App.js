@@ -15,7 +15,7 @@ const SCORE = 100 // base score multiplier
 class App extends Component {
   constructor() {
     super();
-    this.state = reset()
+    this.state = startState()
   }
 
   _handleKeyDown (event) {
@@ -52,9 +52,21 @@ class App extends Component {
         <div className='right-blocks'> {rightBlocks} </div>
         <Score time='2:00' points={this.state.points} />
       </div>
-      );
-    }
+    );
   }
+}
+
+function startState() {
+  return {
+    left: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
+    right: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
+    next: randomArray(PREVIEW_COUNT, COLORS),
+    activeSlots: [],
+    time: 60,
+    points: 0
+  }
+}
+
 
 function drawRow(side) {
   return function (row, rowIndex) {
@@ -133,7 +145,7 @@ function updateGameWithNext(side, oldBlocks, next, activeSlots, points) {
   }
 
   if (newBlocks.some( row => row.indexOf(0) < 0)) {
-    result = reset()
+    result = startState()
   }
   return result;
 }
@@ -264,17 +276,6 @@ function activate(arr, rowIndex) {
 
 function deactivate(arr, rowIndex) {
   return arr.filter(x => x !== rowIndex);
-}
-
-function reset() {
-  return {
-    left: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
-    right: createArray(ROW_COUNT, () => createArray(COL_COUNT, 0)),
-    next: randomArray(PREVIEW_COUNT, COLORS),
-    activeSlots: [],
-    time: 60,
-    points: 0
-  }
 }
 
 export default App;
