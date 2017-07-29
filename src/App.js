@@ -4,13 +4,13 @@ import * as Keys from './Keys.js'
 import Block from './Block.js';
 import Score from './Score.js';
 
-const COL_COUNT = 8
+const COL_COUNT = 8 // width of block container
 const ROW_COUNT = 4 // maps to keys asdf
-const PREVIEW_COUNT = ROW_COUNT * 2
-const SLOTS = 4
-const COLORS = [1,2,3]
-const RUN_TO_CLEAR = 4
-const SCORE = 100
+const PREVIEW_COUNT = ROW_COUNT * 2 // visible next blocks
+const SLOTS = 4 // number of simultaneous rows to activate
+const COLORS = [1,2,3] // available colors
+const RUN_TO_CLEAR = 3 // how many adjacent blocks for a clear
+const SCORE = 100 // base score multiplier
 
 class App extends Component {
   constructor() {
@@ -119,9 +119,8 @@ function pickSide(side, oldState) {
 }
 
 function updateGameWithNext(side, oldBlocks, next, activeSlots, points) {
-  let newBlocks = oldBlocks
-    .map(updateRowWithNext(next, activeSlots))
-    .map(clearBlocks);
+  let newBlocks = oldBlocks.map(updateRowWithNext(next, activeSlots))
+  newBlocks = clearBlocks(newBlocks);
   
   let result = {};  
   result[side] = newBlocks;
@@ -151,28 +150,54 @@ function countBlocksInRow(row) {
   return row.filter(col => col !== 0).length;
 }
 
-function clearBlocks(blocksInRow, rowIndex) { 
+// clear rows and cols
+// collect first then remove all at once 
+function clearBlocks(rowsOfBlocks) { 
 
-  let currentColor
-  let run = 1
+  // collect in same row
+  let runsHorizontal = findRunsHorizontal(rowsOfBlocks)
+  console.log(JSON.stringify(runsHorizontal))
+  runsHorizontal = runsHorizontal.map(row => row.filter(run => run.color !== 0))
+  console.log(JSON.stringify(runsHorizontal))
+  runsHorizontal = runsHorizontal.map(row => row.filter(run => run.elements.length >= RUN_TO_CLEAR))
+  console.log(JSON.stringify(runsHorizontal))
+  console.log("--")
+  // collect in same column
+  // ...
 
-  for (var i = 0; i < blocksInRow.length; i++) {
-    if (blocksInRow[i] === currentColor) {
-      run++;
-    }
-
-    if (blocksInRow[i] !== 0)
-    currentColor = blocksInRow[i];
-  }
-
-  if (run >= RUN_TO_CLEAR) {
-    return blocksInRow.map(x => x === currentColor ? 0 : x);
-  } else {
-    return blocksInRow;
-  }
-
+  return rowsOfBlocks.map(clearBlocksInRow(runsHorizontal))
 }
 
+function clearBlocksInRow(runsH) {
+  return function (blocksInRow, rowIndex) {
+    return blocksInRow.map((block, index) => runsH[rowIndex].some(run => run.elements.includes(index)) ? 0 : block )
+  }
+}
+
+export function findRunsHorizontal(rowsOfBlocks) {
+  return rowsOfBlocks.map(row => {
+    let result = []
+
+    for (var i = 0; i < row.length; i++) {
+      let block = row[i]
+      let current = last(result)
+      if (current && current.color === block) {
+        current.elements.push(i)
+      } else {
+        result.push({color: block, elements:[i]});
+      }
+    }
+    return result
+  });
+}
+
+function last(arr) {
+  if (arr && arr.length > 0) {
+    return arr[arr.length-1];
+  } else {
+    return null;
+  }
+}
 
 function updateRowWithNext(next, activeSlots) {
   return function (blocksInRow, rowIndex) {
