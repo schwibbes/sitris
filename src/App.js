@@ -49,7 +49,6 @@ class App extends Component {
       let newNext = oldState.next.slice();
       newNext.shift();
       newNext.push(randomFromArray(COLORS));
-      console.log(newNext)
       return ({ 
         next: newNext,
         timer: setTimeout(this._progress.bind(this), TIC_MS)
@@ -94,10 +93,11 @@ function startState() {
 
 function drawRow(side) {
   return function (row, rowIndex) {
+    let blocks = side === 'r' ? row.slice().reverse() : row
     return (
       <div 
         key={rowIndex}
-        className='block-row'>{row.map(drawBlock)}
+        className='block-row'>{blocks.map(drawBlock)}
       </div>
     )
   }
